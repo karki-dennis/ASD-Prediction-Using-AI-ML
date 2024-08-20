@@ -14,8 +14,6 @@ This repository contains the code and models developed for the early detection a
   - [Machine Learning for Confirmatory Diagnosis](#machine-learning-for-confirmatory-diagnosis)
 - [Data](#data)
 - [Model Architecture](#model-architecture)
-- [Installation](#installation)
-- [Usage](#usage)
 - [Results](#results)
 - [Future Work](#future-work)
 - [Ethical Considerations](#ethical-considerations)
@@ -50,41 +48,6 @@ For the confirmatory diagnosis, an ensemble machine learning approach was adopte
 - **ResNet50:** Used for feature extraction from facial images.
 - **Ensemble Classifier:** Combines Logistic Regression, Random Forest, and XGBoost for final classification based on behavioral data.
 
-## Installation
-
-To set up the project locally:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/asd-detection.git
-   ```
-2. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-1. **Training the Models:**
-   - To train the deep learning model for preliminary diagnosis:
-     ```bash
-     python train_resnet50.py
-     ```
-   - To train the machine learning models for confirmatory diagnosis:
-     ```bash
-     python train_ensemble.py
-     ```
-
-2. **Making Predictions:**
-   - For ASD detection using facial images:
-     ```bash
-     python predict_image.py --image path_to_image
-     ```
-   - For ASD confirmatory diagnosis using behavioral data:
-     ```bash
-     python predict_behavior.py --data path_to_data
-     ```
-
 ## Results
 
 - **ResNet50 Model:** Achieved an accuracy of 76.54% after 8 epochs of training.
@@ -100,7 +63,8 @@ The use of facial recognition and behavioral data raises significant ethical con
 
 ## Contributors
 
-- [Your Name](https://github.com/your-username)
+- [Ashish Acharya](https://github.com/karki-dennis/ASD-Prediction-Using-AI-ML)
+- [Dennish Karki](https://github.com/Acharya-jyu/ASD-Prediction-Using-AI-ML)
 
 ## References
 
