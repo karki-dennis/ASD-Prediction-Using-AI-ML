@@ -8,13 +8,16 @@ Original file is located at
 """
 
 import pandas as pd
+import os
 
+# Configuration - override via environment variables for non-Colab environments
+DATA_BASE_DIR = os.environ.get('ASD_ML_DATA_DIR', '/content/drive/MyDrive/audata/text')
 
 # Load the four datasets
-d1 = pd.read_csv('/content/drive/MyDrive/audata/text/Autism-Child-Data.csv')
-d2 = pd.read_csv('/content/drive/MyDrive/audata/text/train.csv')
-d3 = pd.read_csv('/content/drive/MyDrive/audata/text/X_prepared.csv')
-d4 = pd.read_csv('/content/drive/MyDrive/audata/text/Toddler Autism dataset July 2018.csv')
+d1 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'Autism-Child-Data.csv'))
+d2 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'train.csv'))
+d3 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'X_prepared.csv'))
+d4 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'Toddler Autism dataset July 2018.csv'))
 
 # Rename columns using a dictionary
 d1 = d1.rename(columns={
@@ -140,7 +143,7 @@ dataCB['age'].fillna(dataCB['age'].median(), inplace=True)
 
 dataCB.head()
 
-dataCB.to_csv('/content/drive/MyDrive/audata/text/processedAuData.csv')
+dataCB.to_csv(os.path.join(DATA_BASE_DIR, 'processedAuData.csv'))
 
 # Convert 'Class/ASD' values from 'YES'/'NO' to binary 1/0
 dataCB['Class/ASD'] = dataCB['Class/ASD'].map({'YES': 1, 'NO': 0})
@@ -252,7 +255,7 @@ plt.title('ROC Curves Comparison')
 plt.legend(loc="lower right")
 plt.show()
 
-dataVD = pd.read_csv('/content/drive/MyDrive/audata/text/processedAuData.csv')
+dataVD = pd.read_csv(os.path.join(DATA_BASE_DIR, 'processedAuData.csv'))
 dataVD.head()
 
 import matplotlib.pyplot as plt

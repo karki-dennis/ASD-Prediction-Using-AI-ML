@@ -5,10 +5,16 @@ import os
 import PIL
 from tensorflow import keras
 
-data_dir = '/content/drive/MyDrive/audata/train'
+# Configuration - override via environment variables for non-Colab environments
+DATA_DIR = os.environ.get('ASD_DL_DATA_DIR', '/content/drive/MyDrive/audata/train')
+MODEL_SAVE_PATH = os.environ.get('ASD_DL_MODEL_PATH', '/content/drive/MyDrive/resnet_model3.keras')
+IMAGE_HEIGHT = 256
+BATCH_SIZE = 50
 
-data_d = '/content/drive/MyDrive/audata/train/Autistic'
-lst = os.listdir(data_d) # your directory path
+data_dir = DATA_DIR
+
+data_d = os.path.join(DATA_DIR, 'Autistic')
+lst = os.listdir(data_d)
 number_files = len(lst)
 print(number_files)
 
@@ -17,8 +23,8 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import image_dataset_from_directory
 from tensorflow.keras.layers import RandomFlip, RandomRotation, RandomZoom
 
-image_height = 256
-batch_size=50
+image_height = IMAGE_HEIGHT
+batch_size = BATCH_SIZE
 
 # Define image augmentation layers
 data_augmentation = tf.keras.Sequential([
@@ -92,7 +98,7 @@ history = resnet_model.fit(
     callbacks=[early_stopping]  # Include Early Stopping
 )
 
-resnet_model.save('/content/drive/MyDrive/resnet_model3.keras')
+resnet_model.save(MODEL_SAVE_PATH)
 
 import cv2
 from google.colab import files
