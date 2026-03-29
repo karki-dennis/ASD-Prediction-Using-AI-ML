@@ -49,14 +49,11 @@ val_ds = image_dataset_from_directory(
     image_size=(image_height, image_height),
     batch_size=batch_size)
 
-from sklearn.model_selection import StratifiedKFold
-from tensorflow.keras.models import load_model, clone_model, Sequential, Model
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Flatten
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam
-from sklearn.metrics import accuracy_score
 from keras.applications import ResNet50
-from tensorflow.keras.layers import Activation, Flatten, Dense
 from tensorflow.keras.callbacks import EarlyStopping
 
 # Model Architecture
@@ -75,7 +72,7 @@ resnet_model.add(Flatten())
 resnet_model.add(Dense(512, activation='relu',kernel_regularizer=l2(0.001)))
 resnet_model.add(BatchNormalization())  # Batch Normalization Layer
 resnet_model.add(Dropout(0.5))  # Adding Dropout for Regularization
-resnet_model.add(Dense(2, activation='sigmoid'))
+resnet_model.add(Dense(2, activation='softmax'))
 
 
 # Compile Model
@@ -95,7 +92,7 @@ history = resnet_model.fit(
     callbacks=[early_stopping]  # Include Early Stopping
 )
 
-resnet_model.save('/content/drive/MyDrive/resnet_model3.h5')
+resnet_model.save('/content/drive/MyDrive/resnet_model3.keras')
 
 import cv2
 from google.colab import files
