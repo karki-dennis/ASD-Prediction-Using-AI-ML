@@ -82,6 +82,7 @@ data=pd.concat([d1,d2,d3,d4],axis=0)
 dataCB = data.drop(columns=['ID', 'result', 'Case_No','used_app_before','Family_mem_with_ASD','Qchat-10-Score','austim','contry_of_res','age_desc','Who completed the test','relation'])
 
 # Standardize gender entries to 'F' for female and 'M' for male
+# Gender encoding assumption: 0=Male, 1=Female in numeric source data (d3/d4)
 replacements = {
     'f': 'F',
     'm': 'M',
@@ -91,33 +92,17 @@ replacements = {
 dataCB['gender'] = dataCB['gender'].replace(replacements)
 
 # Standardize and clean up 'Ethnicity' entries
-replacements = {
-    "'Middle Eastern '": 'Middle Eastern',  # Remove extra spaces and quotes
-    "Middle Eastern ": 'Middle Eastern',   # Trim trailing space
-    "?": 'Others',                         # Replace unknown entries with 'Others'
-    # Convert numeric codes to 'Others'
-    10: 'Others',
-    8: 'Others',
-    2: 'Others',
-    1: 'Others',
-    5: 'Others',
-    0: 'Others',
-    11: 'Others',
-    4: 'Others',
-    9: 'Others',
-    6: 'Others',
-    3: 'Others',
-    7: 'Others'
-}
-dataCB['Ethnicity'] = dataCB['Ethnicity'].replace(replacements)
-# Fill any remaining NaNs in 'Ethnicity' with 'Others'
+# Step 1: Convert to string, strip whitespace and quotes, fill NaN
 dataCB['Ethnicity'] = dataCB['Ethnicity'].fillna('Others')
-
-# Additional cleaning for the 'Ethnicity' column
-replacements = {
-    'others': 'Others'
-}
-dataCB['Ethnicity'] = dataCB['Ethnicity'].replace(replacements)
+dataCB['Ethnicity'] = dataCB['Ethnicity'].apply(
+    lambda x: str(x).strip().strip("'").strip()
+)
+# Step 2: Replace numeric codes and unknown markers with 'Others'
+unknown_values = {str(i): 'Others' for i in range(12)}
+unknown_values['?'] = 'Others'
+dataCB['Ethnicity'] = dataCB['Ethnicity'].replace(unknown_values)
+# Step 3: Normalize casing with title case to prevent duplicate dummy columns
+dataCB['Ethnicity'] = dataCB['Ethnicity'].str.title()
 
 # Convert numeric representations to 'yes' or 'no' for the 'Jaundice' column
 replacements = {
