@@ -198,6 +198,7 @@ ensemble.fit(X_train, y_train)
 
 # Define a function to plot confusion matrix
 def plot_confusion_matrix(y_true, y_pred, model_name):
+    """Display a confusion matrix heatmap for the given model predictions."""
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(6, 4))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
@@ -220,6 +221,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 # Define a function to plot ROC curve
 def plot_roc_curve(y_true, y_scores, model_name):
+    """Plot the ROC curve for a single model."""
     fpr, tpr, _ = roc_curve(y_true, y_scores)
     auc = roc_auc_score(y_true, y_scores)
     plt.figure(figsize=(6, 4))
@@ -240,6 +242,7 @@ for model_name, model in models:
 plt.figure(figsize=(8, 6))
 
 def add_roc_curve(y_true, y_scores, model_name):
+    """Add a ROC curve to the current matplotlib figure for comparison plots."""
     fpr, tpr, _ = roc_curve(y_true, y_scores)
     auc = roc_auc_score(y_true, y_scores)
     plt.plot(fpr, tpr, label=f'{model_name} (AUC = {auc:.2f})')
@@ -267,6 +270,7 @@ sns.set(style="whitegrid")
 
 # Function to plot bar charts for categorical variables
 def plot_bar(dataVD, column, title):
+    """Plot a bar chart for a categorical variable."""
     plt.figure(figsize=(10, 6))
     sns.countplot(data=dataVD, x=column, palette='viridis')
     plt.title(title)
@@ -275,6 +279,7 @@ def plot_bar(dataVD, column, title):
 
 # Function to plot a histogram for the age distribution
 def plot_histogram(dataVD, column, title):
+    """Plot a histogram with KDE for a numeric variable."""
     plt.figure(figsize=(10, 6))
     sns.histplot(dataVD[column], kde=True, color='blue')
     plt.title(title)

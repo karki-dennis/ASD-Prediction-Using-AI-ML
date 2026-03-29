@@ -103,35 +103,46 @@ resnet_model.save(MODEL_SAVE_PATH)
 import cv2
 from google.colab import files
 
-def upload_and_predict_opencv(model, target_size=(256, 256)):
-    # Upload an image file
+def upload_and_predict_opencv(model, target_size=(IMAGE_HEIGHT, IMAGE_HEIGHT)):
+    """Upload an image and predict ASD classification.
+
+    Args:
+        model: Trained Keras model for prediction.
+        target_size: Tuple of (height, width) for image resizing.
+
+    Returns:
+        Predicted class name string, or None if prediction failed.
+    """
     uploaded = files.upload()
+    if not uploaded:
+        print("No file uploaded.")
+        return None
 
-    # Get the first (and only) file name
     file_name = list(uploaded.keys())[0]
+    valid_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
+    if not file_name.lower().endswith(valid_extensions):
+        print(f"Error: Unsupported file type. Please upload one of: {valid_extensions}")
+        return None
 
-    # Load the image using OpenCV
     img = cv2.imread(file_name)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert from BGR to RGB
-    img = cv2.resize(img, target_size)  # Resize the image to the target size
+    if img is None:
+        print(f"Error: Could not read image file '{file_name}'.")
+        return None
 
-    # Preprocess the image
-    img_array = np.expand_dims(img, axis=0)  # Expand dims to create batch
-    img_array = img_array / 255.0  # Normalize the image to [0, 1]
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, target_size)
 
-    # Display the image
+    img_array = np.expand_dims(img, axis=0) / 255.0
+
     plt.imshow(img)
-    plt.axis('off')  # No axes for the image
+    plt.axis('off')
     plt.show()
 
-    # Make prediction
     predictions = model.predict(img_array)
     predicted_class_index = np.argmax(predictions, axis=-1)
     predicted_class_name = class_names[predicted_class_index[0]]
 
     print(f"Predicted class: {predicted_class_name}")
-
-
     return predicted_class_name
 
 
