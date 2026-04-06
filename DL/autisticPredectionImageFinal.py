@@ -5,10 +5,16 @@ import os
 import PIL
 from tensorflow import keras
 
-data_dir = '/content/drive/MyDrive/audata/train'
+# Configuration - override via environment variables for non-Colab environments
+DATA_DIR = os.environ.get('ASD_DL_DATA_DIR', '/content/drive/MyDrive/audata/train')
+MODEL_SAVE_PATH = os.environ.get('ASD_DL_MODEL_PATH', '/content/drive/MyDrive/resnet_model3.keras')
+IMAGE_HEIGHT = 256
+BATCH_SIZE = 50
 
-data_d = '/content/drive/MyDrive/audata/train/Autistic'
-lst = os.listdir(data_d) # your directory path
+data_dir = DATA_DIR
+
+data_d = os.path.join(DATA_DIR, 'Autistic')
+lst = os.listdir(data_d)
 number_files = len(lst)
 print(number_files)
 
@@ -17,8 +23,8 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import image_dataset_from_directory
 from tensorflow.keras.layers import RandomFlip, RandomRotation, RandomZoom
 
-image_height = 256
-batch_size=50
+image_height = IMAGE_HEIGHT
+batch_size = BATCH_SIZE
 
 # Define image augmentation layers
 data_augmentation = tf.keras.Sequential([
@@ -49,14 +55,11 @@ val_ds = image_dataset_from_directory(
     image_size=(image_height, image_height),
     batch_size=batch_size)
 
-from sklearn.model_selection import StratifiedKFold
-from tensorflow.keras.models import load_model, clone_model, Sequential, Model
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Flatten
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam
-from sklearn.metrics import accuracy_score
 from keras.applications import ResNet50
-from tensorflow.keras.layers import Activation, Flatten, Dense
 from tensorflow.keras.callbacks import EarlyStopping
 
 # Model Architecture
@@ -75,7 +78,7 @@ resnet_model.add(Flatten())
 resnet_model.add(Dense(512, activation='relu',kernel_regularizer=l2(0.001)))
 resnet_model.add(BatchNormalization())  # Batch Normalization Layer
 resnet_model.add(Dropout(0.5))  # Adding Dropout for Regularization
-resnet_model.add(Dense(2, activation='sigmoid'))
+resnet_model.add(Dense(2, activation='softmax'))
 
 
 # Compile Model
@@ -95,40 +98,51 @@ history = resnet_model.fit(
     callbacks=[early_stopping]  # Include Early Stopping
 )
 
-resnet_model.save('/content/drive/MyDrive/resnet_model3.h5')
+resnet_model.save(MODEL_SAVE_PATH)
 
 import cv2
 from google.colab import files
 
-def upload_and_predict_opencv(model, target_size=(256, 256)):
-    # Upload an image file
+def upload_and_predict_opencv(model, target_size=(IMAGE_HEIGHT, IMAGE_HEIGHT)):
+    """Upload an image and predict ASD classification.
+
+    Args:
+        model: Trained Keras model for prediction.
+        target_size: Tuple of (height, width) for image resizing.
+
+    Returns:
+        Predicted class name string, or None if prediction failed.
+    """
     uploaded = files.upload()
+    if not uploaded:
+        print("No file uploaded.")
+        return None
 
-    # Get the first (and only) file name
     file_name = list(uploaded.keys())[0]
+    valid_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
+    if not file_name.lower().endswith(valid_extensions):
+        print(f"Error: Unsupported file type. Please upload one of: {valid_extensions}")
+        return None
 
-    # Load the image using OpenCV
     img = cv2.imread(file_name)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert from BGR to RGB
-    img = cv2.resize(img, target_size)  # Resize the image to the target size
+    if img is None:
+        print(f"Error: Could not read image file '{file_name}'.")
+        return None
 
-    # Preprocess the image
-    img_array = np.expand_dims(img, axis=0)  # Expand dims to create batch
-    img_array = img_array / 255.0  # Normalize the image to [0, 1]
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, target_size)
 
-    # Display the image
+    img_array = np.expand_dims(img, axis=0) / 255.0
+
     plt.imshow(img)
-    plt.axis('off')  # No axes for the image
+    plt.axis('off')
     plt.show()
 
-    # Make prediction
     predictions = model.predict(img_array)
     predicted_class_index = np.argmax(predictions, axis=-1)
     predicted_class_name = class_names[predicted_class_index[0]]
 
     print(f"Predicted class: {predicted_class_name}")
-
-
     return predicted_class_name
 
 

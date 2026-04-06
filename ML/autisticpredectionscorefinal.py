@@ -8,13 +8,16 @@ Original file is located at
 """
 
 import pandas as pd
+import os
 
+# Configuration - override via environment variables for non-Colab environments
+DATA_BASE_DIR = os.environ.get('ASD_ML_DATA_DIR', '/content/drive/MyDrive/audata/text')
 
 # Load the four datasets
-d1 = pd.read_csv('/content/drive/MyDrive/audata/text/Autism-Child-Data.csv')
-d2 = pd.read_csv('/content/drive/MyDrive/audata/text/train.csv')
-d3 = pd.read_csv('/content/drive/MyDrive/audata/text/X_prepared.csv')
-d4 = pd.read_csv('/content/drive/MyDrive/audata/text/Toddler Autism dataset July 2018.csv')
+d1 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'Autism-Child-Data.csv'))
+d2 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'train.csv'))
+d3 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'X_prepared.csv'))
+d4 = pd.read_csv(os.path.join(DATA_BASE_DIR, 'Toddler Autism dataset July 2018.csv'))
 
 # Rename columns using a dictionary
 d1 = d1.rename(columns={
@@ -79,6 +82,7 @@ data=pd.concat([d1,d2,d3,d4],axis=0)
 dataCB = data.drop(columns=['ID', 'result', 'Case_No','used_app_before','Family_mem_with_ASD','Qchat-10-Score','austim','contry_of_res','age_desc','Who completed the test','relation'])
 
 # Standardize gender entries to 'F' for female and 'M' for male
+# Gender encoding assumption: 0=Male, 1=Female in numeric source data (d3/d4)
 replacements = {
     'f': 'F',
     'm': 'M',
@@ -88,33 +92,17 @@ replacements = {
 dataCB['gender'] = dataCB['gender'].replace(replacements)
 
 # Standardize and clean up 'Ethnicity' entries
-replacements = {
-    "'Middle Eastern '": 'Middle Eastern',  # Remove extra spaces and quotes
-    "Middle Eastern ": 'Middle Eastern',   # Trim trailing space
-    "?": 'Others',                         # Replace unknown entries with 'Others'
-    # Convert numeric codes to 'Others'
-    10: 'Others',
-    8: 'Others',
-    2: 'Others',
-    1: 'Others',
-    5: 'Others',
-    0: 'Others',
-    11: 'Others',
-    4: 'Others',
-    9: 'Others',
-    6: 'Others',
-    3: 'Others',
-    7: 'Others'
-}
-dataCB['Ethnicity'] = dataCB['Ethnicity'].replace(replacements)
-# Fill any remaining NaNs in 'Ethnicity' with 'Others'
+# Step 1: Convert to string, strip whitespace and quotes, fill NaN
 dataCB['Ethnicity'] = dataCB['Ethnicity'].fillna('Others')
-
-# Additional cleaning for the 'Ethnicity' column
-replacements = {
-    'others': 'Others'
-}
-dataCB['Ethnicity'] = dataCB['Ethnicity'].replace(replacements)
+dataCB['Ethnicity'] = dataCB['Ethnicity'].apply(
+    lambda x: str(x).strip().strip("'").strip()
+)
+# Step 2: Replace numeric codes and unknown markers with 'Others'
+unknown_values = {str(i): 'Others' for i in range(12)}
+unknown_values['?'] = 'Others'
+dataCB['Ethnicity'] = dataCB['Ethnicity'].replace(unknown_values)
+# Step 3: Normalize casing with title case to prevent duplicate dummy columns
+dataCB['Ethnicity'] = dataCB['Ethnicity'].str.title()
 
 # Convert numeric representations to 'yes' or 'no' for the 'Jaundice' column
 replacements = {
@@ -140,7 +128,7 @@ dataCB['age'].fillna(dataCB['age'].median(), inplace=True)
 
 dataCB.head()
 
-dataCB.to_csv('/content/drive/MyDrive/audata/text/processedAuData.csv')
+dataCB.to_csv(os.path.join(DATA_BASE_DIR, 'processedAuData.csv'))
 
 # Convert 'Class/ASD' values from 'YES'/'NO' to binary 1/0
 dataCB['Class/ASD'] = dataCB['Class/ASD'].map({'YES': 1, 'NO': 0})
@@ -195,6 +183,7 @@ ensemble.fit(X_train, y_train)
 
 # Define a function to plot confusion matrix
 def plot_confusion_matrix(y_true, y_pred, model_name):
+    """Display a confusion matrix heatmap for the given model predictions."""
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(6, 4))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
@@ -217,6 +206,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 # Define a function to plot ROC curve
 def plot_roc_curve(y_true, y_scores, model_name):
+    """Plot the ROC curve for a single model."""
     fpr, tpr, _ = roc_curve(y_true, y_scores)
     auc = roc_auc_score(y_true, y_scores)
     plt.figure(figsize=(6, 4))
@@ -237,6 +227,7 @@ for model_name, model in models:
 plt.figure(figsize=(8, 6))
 
 def add_roc_curve(y_true, y_scores, model_name):
+    """Add a ROC curve to the current matplotlib figure for comparison plots."""
     fpr, tpr, _ = roc_curve(y_true, y_scores)
     auc = roc_auc_score(y_true, y_scores)
     plt.plot(fpr, tpr, label=f'{model_name} (AUC = {auc:.2f})')
@@ -252,7 +243,7 @@ plt.title('ROC Curves Comparison')
 plt.legend(loc="lower right")
 plt.show()
 
-dataVD = pd.read_csv('/content/drive/MyDrive/audata/text/processedAuData.csv')
+dataVD = pd.read_csv(os.path.join(DATA_BASE_DIR, 'processedAuData.csv'))
 dataVD.head()
 
 import matplotlib.pyplot as plt
@@ -264,6 +255,7 @@ sns.set(style="whitegrid")
 
 # Function to plot bar charts for categorical variables
 def plot_bar(dataVD, column, title):
+    """Plot a bar chart for a categorical variable."""
     plt.figure(figsize=(10, 6))
     sns.countplot(data=dataVD, x=column, palette='viridis')
     plt.title(title)
@@ -272,6 +264,7 @@ def plot_bar(dataVD, column, title):
 
 # Function to plot a histogram for the age distribution
 def plot_histogram(dataVD, column, title):
+    """Plot a histogram with KDE for a numeric variable."""
     plt.figure(figsize=(10, 6))
     sns.histplot(dataVD[column], kde=True, color='blue')
     plt.title(title)
